@@ -7,9 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/Workiva/go-datastructures/queue"
-	statsservice "github.com/xtls/xray-core/app/stats/command"
-	"google.golang.org/grpc"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -18,6 +15,11 @@ import (
 	"strings"
 	"time"
 	"x-ui/util/common"
+	"x-ui/xray/limiter"
+
+	"github.com/Workiva/go-datastructures/queue"
+	statsservice "github.com/xtls/xray-core/app/stats/command"
+	"google.golang.org/grpc"
 )
 
 var trafficRegex = regexp.MustCompile("(inbound|outbound)>>>([^>]+)>>>traffic>>>(downlink|uplink)")
@@ -160,6 +162,23 @@ func (p *process) Start() (err error) {
 		return common.NewErrorf("写入配置文件失败: %v", err)
 	}
 
+	// 提取UUID和协议信息供IP限制功能使用
+	limiter.ExtractUUIDs(data)
+
+	// 加载IP限制配置
+	err = limiter.LoadIPLimitConfig()
+	if err != nil {
+		// 只记录警告但不阻止Xray启动
+		fmt.Println("加载IP限制配置失败:", err)
+	}
+
+	// 初始化Redis连接
+	err = limiter.InitRedisClient()
+	if err != nil {
+		// 只记录警告但不阻止Xray启动
+		fmt.Println("初始化Redis连接失败:", err)
+	}
+
 	cmd := exec.Command(GetBinaryPath(), "-c", configPath)
 	p.cmd = cmd
 
@@ -186,7 +205,11 @@ func (p *process) Start() (err error) {
 			if p.lines.Len() >= 100 {
 				p.lines.Get(1)
 			}
-			p.lines.Put(string(line))
+			lineStr := string(line)
+			p.lines.Put(lineStr)
+
+			// 处理日志，识别连接事件
+			limiter.ProcessLog(lineStr)
 		}
 	}()
 
@@ -204,7 +227,11 @@ func (p *process) Start() (err error) {
 			if p.lines.Len() >= 100 {
 				p.lines.Get(1)
 			}
-			p.lines.Put(string(line))
+			lineStr := string(line)
+			p.lines.Put(lineStr)
+
+			// 处理错误日志，识别连接事件
+			limiter.ProcessLog(lineStr)
 		}
 	}()
 

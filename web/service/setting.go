@@ -29,6 +29,13 @@ var defaultValueMap = map[string]string{
 	"secret":             random.Seq(32),
 	"webBasePath":        "/",
 	"timeLocation":       "Asia/Shanghai",
+	"enableIpLimit":      "false",
+	"redisAddr":          "127.0.0.1",
+	"redisPort":          "6379",
+	"redisPassword":      "",
+	"redisDb":            "0",
+	"maxIpLimit":         "2",
+	"maxIpPerConn":       "10",
 }
 
 type SettingService struct {

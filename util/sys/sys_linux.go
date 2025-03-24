@@ -1,12 +1,13 @@
+//go:build linux
 // +build linux
 
 package sys
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"os"
+	"strings"
 )
 
 func getLinesNum(filename string) (int, error) {
@@ -40,31 +41,74 @@ func getLinesNum(filename string) (int, error) {
 }
 
 func GetTCPCount() (int, error) {
-	root := HostProc()
-
-	tcp4, err := getLinesNum(fmt.Sprintf("%v/net/tcp", root))
+	data, err := os.ReadFile("/proc/net/tcp")
 	if err != nil {
-		return tcp4, err
-	}
-	tcp6, err := getLinesNum(fmt.Sprintf("%v/net/tcp6", root))
-	if err != nil {
-		return tcp4 + tcp6, nil
+		return 0, err
 	}
 
-	return tcp4 + tcp6, nil
+	lines := strings.Split(string(data), "\n")
+	return len(lines) - 1, nil
 }
 
 func GetUDPCount() (int, error) {
-	root := HostProc()
-
-	udp4, err := getLinesNum(fmt.Sprintf("%v/net/udp", root))
+	data, err := os.ReadFile("/proc/net/udp")
 	if err != nil {
-		return udp4, err
-	}
-	udp6, err := getLinesNum(fmt.Sprintf("%v/net/udp6", root))
-	if err != nil {
-		return udp4 + udp6, nil
+		return 0, err
 	}
 
-	return udp4 + udp6, nil
+	lines := strings.Split(string(data), "\n")
+	return len(lines) - 1, nil
+}
+
+func isLSB(path string) bool {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return false
+	}
+	return strings.Contains(string(data), "LSB")
+}
+
+func GetSystemInfo() string {
+	var result strings.Builder
+	if isLSB("/proc/version") || isLSB("/proc/sys/kernel/ostype") {
+		// for Linux
+		name := getValueFromFile("/etc/os-release", "ID", "")
+		result.WriteString(strings.TrimSpace(name))
+
+		version := getValueFromFile("/etc/os-release", "VERSION_ID", "")
+		if len(version) > 0 {
+			version = strings.ReplaceAll(version, "\"", "")
+			result.WriteString(" ")
+			result.WriteString(version)
+		}
+	}
+	return result.String()
+}
+
+func getValueFromFile(file string, key string, defaultValue string) string {
+	data, err := os.ReadFile(file)
+	if err != nil {
+		return defaultValue
+	}
+	lines := strings.Split(string(data), "\n")
+	for _, line := range lines {
+		values := strings.Split(strings.TrimSpace(line), "=")
+		if len(values) != 2 {
+			continue
+		}
+		if values[0] == key {
+			return values[1]
+		}
+	}
+	return defaultValue
+}
+
+func GetPid(processName string) ([]int, error) {
+	// TODO:
+	return nil, nil
+}
+
+func Kill(pid int) error {
+	// TODO:
+	return nil
 }

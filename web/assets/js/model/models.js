@@ -167,6 +167,15 @@ class AllSetting {
         this.xrayTemplateConfig = "";
 
         this.timeLocation = "Asia/Shanghai";
+        
+        // IP限制相关设置
+        this.enableIpLimit = false;
+        this.redisAddr = "127.0.0.1";
+        this.redisPort = 6379;
+        this.redisPassword = "";
+        this.redisDb = 0;
+        this.maxIpLimit = 2;
+        this.maxIpPerConn = 10;
 
         if (data == null) {
             return

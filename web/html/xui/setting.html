@@ -71,7 +71,18 @@
                                 <setting-list-item type="textarea" title="xray 配置模版" desc="以该模版为基础生成最终的 xray 配置文件，重启面板生效" v-model="allSetting.xrayTemplateConfig"></setting-list-item>
                             </a-list>
                         </a-tab-pane>
-                        <a-tab-pane key="4" tab="其他设置">
+                        <a-tab-pane key="4" tab="IP限制设置">
+                            <a-list item-layout="horizontal" style="background: white">
+                                <setting-list-item type="switch" title="启用IP限制" desc="开启后限制每个UUID可以同时连接的IP数量，需要Redis服务，重启面板生效" v-model="allSetting.enableIpLimit"></setting-list-item>
+                                <setting-list-item type="text" title="Redis服务器地址" desc="Redis服务器IP地址，默认为127.0.0.1" v-model="allSetting.redisAddr"></setting-list-item>
+                                <setting-list-item type="number" title="Redis服务器端口" desc="Redis服务器端口，默认为6379" v-model.number="allSetting.redisPort"></setting-list-item>
+                                <setting-list-item type="text" title="Redis密码" desc="Redis服务器密码，如果没有设置可留空" v-model="allSetting.redisPassword"></setting-list-item>
+                                <setting-list-item type="number" title="Redis数据库" desc="Redis数据库索引，默认为0" v-model.number="allSetting.redisDb"></setting-list-item>
+                                <setting-list-item type="number" title="最大IP数量" desc="每个UUID最多可以同时连接的不同IP数量，默认为2" v-model.number="allSetting.maxIpLimit"></setting-list-item>
+                                <setting-list-item type="number" title="单IP最大连接数" desc="单个IP对同一UUID最大连接数，默认为10" v-model.number="allSetting.maxIpPerConn"></setting-list-item>
+                            </a-list>
+                        </a-tab-pane>
+                        <a-tab-pane key="5" tab="其他设置">
                             <a-list item-layout="horizontal" style="background: white">
                                 <setting-list-item type="text" title="时区" desc="定时任务按照该时区的时间运行，重启面板生效" v-model="allSetting.timeLocation"></setting-list-item>
                             </a-list>

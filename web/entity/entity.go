@@ -36,6 +36,15 @@ type AllSetting struct {
 	XrayTemplateConfig string `json:"xrayTemplateConfig" form:"xrayTemplateConfig"`
 
 	TimeLocation string `json:"timeLocation" form:"timeLocation"`
+
+	// IP限制相关设置
+	EnableIpLimit bool   `json:"enableIpLimit" form:"enableIpLimit"`
+	RedisAddr     string `json:"redisAddr" form:"redisAddr"`
+	RedisPort     int    `json:"redisPort" form:"redisPort"`
+	RedisPassword string `json:"redisPassword" form:"redisPassword"`
+	RedisDb       int    `json:"redisDb" form:"redisDb"`
+	MaxIpLimit    int    `json:"maxIpLimit" form:"maxIpLimit"`
+	MaxIpPerConn  int    `json:"maxIpPerConn" form:"maxIpPerConn"`
 }
 
 func (s *AllSetting) CheckValid() error {
@@ -73,6 +82,22 @@ func (s *AllSetting) CheckValid() error {
 	_, err = time.LoadLocation(s.TimeLocation)
 	if err != nil {
 		return common.NewError("time location not exist:", s.TimeLocation)
+	}
+
+	// 验证IP限制相关设置
+	if s.EnableIpLimit {
+		if s.RedisAddr == "" {
+			return common.NewError("Redis address cannot be empty when IP limit is enabled")
+		}
+		if s.RedisPort <= 0 || s.RedisPort > 65535 {
+			return common.NewError("Redis port is not valid:", s.RedisPort)
+		}
+		if s.MaxIpLimit <= 0 {
+			return common.NewError("Max IP limit must be greater than 0")
+		}
+		if s.MaxIpPerConn <= 0 {
+			return common.NewError("Max IP per connection must be greater than 0")
+		}
 	}
 
 	return nil
